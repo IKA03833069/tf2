@@ -4,6 +4,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 
 import twitter4j.Status;
 import twitter4j.Twitter;
@@ -19,25 +26,31 @@ public class TwitterFortune {
 		// TODO Auto-generated method stub
 //        System.out.println("test");
 //		postTest();
-		Fotune test = fortuneGet(2014, 3, 20);
-		// TODO null返ってくるorz
-		System.out.println(test.getHoroscope().getContent());
-
+		Calendar date1 = Calendar.getInstance();
+		int year = date1.get(Calendar.YEAR);
+		int month = date1.get(Calendar.MONTH) + 1;
+		int day = date1.get(Calendar.DATE);
+		List<Seiza> fortuneResult = fortuneGet(year, month, day);
+		for (Seiza seiza : fortuneResult){
+			postTest(seiza);
+		}
 	}
 
-	public static void postTest() {
+	public static void postTest(Seiza result) {
 		Twitter twitter = TwitterFactory.getSingleton();
+		String tweetText = result.getSign() + "," + result.getRank() + "位";
 		Status status = null;
 		try {
-			status = twitter.updateStatus("test post");
+			status = twitter.updateStatus(tweetText);
 		}
 		catch (Exception e) {
 			System.out.println(e.toString());
 		}
 //		System.out.println(status.toString());
 	}
-	public static Fotune fortuneGet(int year, int month, int day) {
-//		http://api.jugemkey.jp/api/horoscope/2013/04/10
+	public static List<Seiza> fortuneGet(int year, int month, int day) {
+// 結果をgetするURL作成
+// http://api.jugemkey.jp/api/horoscope/free/2013/04/10
 		String fortuneUrl = "http://api.jugemkey.jp/api/horoscope/free/";
 		String strDate = String.format("%04d/%02d/%02d/", year, month, day);
 		fortuneUrl += strDate;
@@ -46,13 +59,45 @@ public class TwitterFortune {
             URL url = new URL(fortuneUrl);
             Object content = url.getContent();
 //            if (content instanceof InputStream) {
-                BufferedReader bf = new BufferedReader(new InputStreamReader( (InputStream)content) );        
-                String line;
-                line = bf.readLine();
-//                System.out.println(line);
-                 // JSONをPOJOに変換します
-                Fotune f = JSON.decode(line, Fotune.class);
-                return f;
+            BufferedReader bf = new BufferedReader(new InputStreamReader( (InputStream)content) );        
+            String line;
+            line = bf.readLine();
+            JsonFactory factory = new JsonFactory();
+            JsonParser parser = factory.createJsonParser(line);
+            List<Seiza> seizaList = new ArrayList<Seiza>(); 
+            while (parser.nextToken() != JsonToken.END_ARRAY){
+                Seiza seiza = new Seiza();
+                while (parser.nextToken() != JsonToken.END_OBJECT){
+                	String name = parser.getCurrentName();
+                	if(name != null){
+                        System.out.println(name);
+                		parser.nextToken();
+                		if(name.equals("content")){
+                			seiza.setContent(parser.getText());
+                		}else if(name.equals("item")){
+                			seiza.setItem(parser.getText());
+                		}else if(name.equals("money")){
+                			seiza.setMoney(Integer.parseInt(parser.getText()));
+                		}else if(name.equals("total")){
+                			seiza.setTotal(Integer.parseInt(parser.getText()));
+                		}else if(name.equals("job")){
+                			seiza.setJob(Integer.parseInt(parser.getText()));
+                		}else if(name.equals("color")){
+                			seiza.setColor(parser.getText());
+                		}else if(name.equals("love")){
+                			seiza.setLove(Integer.parseInt(parser.getText()));
+                		}else if(name.equals("rank")){
+                			seiza.setRank(Integer.parseInt(parser.getText()));
+                		}else if(name.equals("sign")){
+                			seiza.setSign(parser.getText());
+                		} 
+                        System.out.println(seiza);
+                	}
+                }
+            	seizaList.add(seiza);
+            }
+            System.out.println(seizaList.size());
+            return seizaList;
 //            }
 //            else {
 //                System.out.println(content.toString());
@@ -70,72 +115,6 @@ public class TwitterFortune {
         return null;
 	}
 	
-	class Seiza {
-		private String content;
-		private String item;
-		private Integer money;
-		private Integer total;
-		private Integer job;
-		private String color;
-		private Integer love;
-		private Integer rank;
-		private String sign;
-		public String getContent() {
-			return content;
-		}
-		public void setContent(String content) {
-			this.content = content;
-		}
-		public String getItem() {
-			return item;
-		}
-		public void setItem(String item) {
-			this.item = item;
-		}
-		public Integer getMoney() {
-			return money;
-		}
-		public void setMoney(Integer money) {
-			this.money = money;
-		}
-		public Integer getTotal() {
-			return total;
-		}
-		public void setTotal(Integer total) {
-			this.total = total;
-		}
-		public Integer getJob() {
-			return job;
-		}
-		public void setJob(Integer job) {
-			this.job = job;
-		}
-		public String getColor() {
-			return color;
-		}
-		public void setColor(String color) {
-			this.color = color;
-		}
-		public Integer getLove() {
-			return love;
-		}
-		public void setLove(Integer love) {
-			this.love = love;
-		}
-		public Integer getRank() {
-			return rank;
-		}
-		public void setRank(Integer rank) {
-			this.rank = rank;
-		}
-		public String getSign() {
-			return sign;
-		}
-		public void setSign(String sign) {
-			this.sign = sign;
-		}
-	
-	}
 	class Fotune {
 		private Seiza horoscope;
 
@@ -146,8 +125,5 @@ public class TwitterFortune {
 		public void setHoroscope(Seiza horoscope) {
 			this.horoscope = horoscope;
 		}
-		
-		
 	}
-	
 }
