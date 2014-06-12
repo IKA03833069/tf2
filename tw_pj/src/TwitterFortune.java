@@ -32,13 +32,15 @@ public class TwitterFortune {
 		int day = date1.get(Calendar.DATE);
 		List<Seiza> fortuneResult = fortuneGet(year, month, day);
 		for (Seiza seiza : fortuneResult){
-			postTest(seiza);
+			postTest(seiza, year, month, day);
 		}
 	}
 
-	public static void postTest(Seiza result) {
+	public static void postTest(Seiza result, int year, int month, int day) {
 		Twitter twitter = TwitterFactory.getSingleton();
-		String tweetText = result.getSign() + "," + result.getRank() + "位";
+		String date = year + "/" + month + "/" + day;
+		String tweetText = "【" + date + "の運勢】" + result.getSign() + "," + result.getRank() + "位";
+		tweetText += ""; //★内容の編集！
 		Status status = null;
 		try {
 			status = twitter.updateStatus(tweetText);
