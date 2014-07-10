@@ -24,8 +24,6 @@ public class TwitterFortune {
 	 */
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-//        System.out.println("test");
-//		postTest();
 		Calendar date1 = Calendar.getInstance();
 		int year = date1.get(Calendar.YEAR);
 		int month = date1.get(Calendar.MONTH) + 1;
@@ -39,8 +37,15 @@ public class TwitterFortune {
 	public static void postTest(Seiza result, int year, int month, int day) {
 		Twitter twitter = TwitterFactory.getSingleton();
 		String date = year + "/" + month + "/" + day;
-		String tweetText = "【" + date + "の運勢】" + result.getSign() + "," + result.getRank() + "位";
-		tweetText += ""; //★内容の編集！
+		String tweetText = "【" + date + "の運勢】" + result.getSign() + " " + result.getRank() + "位\n";
+		tweetText += " 総合運:" + getStar(result.getTotal());
+		tweetText += "\n 恋愛運:" + getStar(result.getLove());
+		tweetText += "\n 仕事運:" + getStar(result.getJob());
+		tweetText += "\n 金　運:" + getStar(result.getMoney());
+		tweetText += "\n" + result.getContent();
+		if (tweetText.length() > 140){
+			tweetText = tweetText.substring(0,138) + "…";
+		}
 		Status status = null;
 		try {
 			status = twitter.updateStatus(tweetText);
@@ -50,6 +55,18 @@ public class TwitterFortune {
 		}
 //		System.out.println(status.toString());
 	}
+    private static String getStar(int number){
+        String star = ""; 
+    	switch(number){
+    	case 1: star = "★☆☆☆☆"; break;
+    	case 2: star = "★★☆☆☆"; break;
+    	case 3: star = "★★★☆☆"; break;
+    	case 4: star = "★★★★☆"; break;
+    	case 5: star = "★★★★★"; break;
+    	default: star = "☆☆☆☆☆"; break;
+    	}
+    	return star;
+    }
 	public static List<Seiza> fortuneGet(int year, int month, int day) {
 // 結果をgetするURL作成
 // http://api.jugemkey.jp/api/horoscope/free/2013/04/10
@@ -100,10 +117,6 @@ public class TwitterFortune {
             }
             System.out.println(seizaList.size());
             return seizaList;
-//            }
-//            else {
-//                System.out.println(content.toString());
-//            }
         }
         catch (ArrayIndexOutOfBoundsException e) {
             System.err.println("引数にURLを指定してください");
